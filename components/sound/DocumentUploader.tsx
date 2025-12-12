@@ -3,12 +3,12 @@
 /**
  * Document Uploader Component
  * Upload PDFs, images, or paste spec sheet text to extract sound data
- * Supports both text extraction and AI-powered vision analysis
+ * Automatically uses AI vision when text extraction fails
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles, Eye } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { ParseResult, ExtractedSoundData } from "@/lib/parsing";
@@ -32,8 +32,8 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [showPasteInput, setShowPasteInput] = useState(false);
   const [pasteText, setPasteText] = useState("");
-  const [useAI, setUseAI] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [usedAI, setUsedAI] = useState(false);
   
   // Check if API key is configured
   useEffect(() => {
@@ -63,13 +63,14 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     }
   }, [onDataExtracted, onOctaveBandsExtracted]);
   
-  // Handle file drop
+  // Handle file drop with automatic AI fallback
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     
     const file = acceptedFiles[0];
     setUploadState("processing");
     setParseResult(null);
+    setUsedAI(false);
     
     try {
       let result: ParseResult;
@@ -77,24 +78,33 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
       const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
       const apiKey = getApiKey();
       
-      if (useAI && hasApiKey) {
-        // Use AI-powered extraction
-        if (isImage) {
+      // For images, go straight to AI (if available)
+      if (isImage) {
+        if (hasApiKey) {
+          setUsedAI(true);
           result = await parseImageWithVision(file, apiKey);
-        } else if (isPDF) {
-          result = await parsePDFWithVision(file, apiKey);
         } else {
-          // For text files, still use regular parsing
-          result = await parseFile(file);
+          result = {
+            success: false,
+            data: [],
+            errors: ["Image files require AI extraction. Please configure NEXT_PUBLIC_GEMINI_API_KEY in .env.local"],
+            warnings: [],
+          };
         }
-      } else {
-        // Use regular text-based extraction
+      } 
+      // For PDFs, try text extraction first, then fall back to AI
+      else if (isPDF) {
         result = await parseFile(file);
         
-        // If no patterns found and it's a PDF or image, suggest using AI
-        if (!result.success && (isPDF || isImage) && hasApiKey) {
-          result.warnings.push("No patterns found. Try enabling AI extraction for image-based documents.");
+        // If text extraction failed or found no data, try AI
+        if (!result.success && hasApiKey) {
+          setUsedAI(true);
+          result = await parsePDFWithVision(file, apiKey);
         }
+      } 
+      // For text/CSV files, use regular parsing
+      else {
+        result = await parseFile(file);
       }
       
       setParseResult(result);
@@ -112,7 +122,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
         warnings: [],
       });
     }
-  }, [useAI, hasApiKey, processExtractedData]);
+  }, [hasApiKey, processExtractedData]);
   
   // Handle pasted text
   const handlePaste = useCallback(() => {
@@ -120,6 +130,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     
     setUploadState("processing");
     setParseResult(null);
+    setUsedAI(false);
     
     const specSheetData = parseSpecSheetText(pasteText);
     
@@ -163,12 +174,13 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     setParseResult(null);
     setPasteText("");
     setShowPasteInput(false);
+    setUsedAI(false);
   }, []);
   
-  // Dropzone configuration - accept images when AI is enabled
+  // Dropzone configuration - accept images if API key is configured
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: useAI ? {
+    accept: hasApiKey ? {
       "application/pdf": [".pdf"],
       "text/plain": [".txt"],
       "text/csv": [".csv"],
@@ -185,33 +197,10 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-medium flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#4A3AFF]" />
-            Import Sound Data
-          </CardTitle>
-          
-          {/* AI Toggle - only show if API key is configured */}
-          {hasApiKey && (
-            <Button
-              variant={useAI ? "default" : "outline"}
-              size="sm"
-              onClick={() => setUseAI(!useAI)}
-              className={useAI ? "bg-[#4A3AFF] hover:bg-[#4A3AFF]/80" : ""}
-            >
-              <Sparkles className="w-4 h-4 mr-1" />
-              AI
-            </Button>
-          )}
-        </div>
-        
-        {/* AI info banner */}
-        {useAI && hasApiKey && (
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <Eye className="w-3 h-3" />
-            AI vision enabled - can extract from images & scanned PDFs
-          </p>
-        )}
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <FileText className="w-5 h-5 text-[#4A3AFF]" />
+          Import Sound Data
+        </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
@@ -272,9 +261,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
               {uploadState === "processing" ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 text-[#4A3AFF] animate-spin" />
-                  <p className="text-sm text-muted-foreground">
-                    {useAI ? "Analyzing with AI..." : "Processing document..."}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Processing document...</p>
                 </div>
               ) : uploadState === "success" ? (
                 <div className="flex flex-col items-center gap-2">
@@ -318,7 +305,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
                     }
                   </p>
                   <p className="text-xs text-muted-foreground/70">
-                    {useAI 
+                    {hasApiKey 
                       ? "Supports PDF, images (PNG, JPG), TXT, CSV" 
                       : "Supports PDF, TXT, CSV files"
                     }
@@ -379,7 +366,15 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-[#16DA7C] mt-0.5 flex-shrink-0" />
                   <div className="text-sm space-y-1">
-                    <p className="text-[#16DA7C] font-medium">Extracted Data:</p>
+                    <p className="text-[#16DA7C] font-medium flex items-center gap-1">
+                      Extracted Data
+                      {usedAI && (
+                        <span className="inline-flex items-center gap-0.5 text-xs bg-[#4A3AFF]/10 text-[#4A3AFF] px-1.5 py-0.5 rounded">
+                          <Sparkles className="w-3 h-3" />
+                          AI
+                        </span>
+                      )}
+                    </p>
                     {parseResult.data[0].octaveBands && (
                       <p className="text-foreground">
                         ✓ Octave bands: {Object.values(parseResult.data[0].octaveBands).filter(v => v !== undefined).length} frequencies
@@ -411,7 +406,6 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
                     )}
                     <p className="text-muted-foreground text-xs mt-2">
                       Confidence: {parseResult.data[0].source.confidence}
-                      {useAI && " (AI-powered)"}
                     </p>
                   </div>
                 </div>
