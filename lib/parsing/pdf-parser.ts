@@ -20,8 +20,8 @@ async function initPdfJs() {
   if (!pdfjsLib) {
     pdfjsLib = await import("pdfjs-dist");
     
-    // Set worker source - use CDN for simplicity
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    // Set worker source - use unpkg CDN which has proper ESM support
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
   }
 
   return pdfjsLib;
