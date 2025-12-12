@@ -6,15 +6,13 @@
  * Supports both text extraction and AI-powered vision analysis
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles, Eye, Key } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { ParseResult, ExtractedSoundData } from "@/lib/parsing";
-import { parseFile, parseText, parseSpecSheetText, parsePDFWithVision, parseImageWithVision, initializeGemini, isGeminiInitialized } from "@/lib/parsing";
+import { parseFile, parseText, parseSpecSheetText, parsePDFWithVision, parseImageWithVision, initializeGemini } from "@/lib/parsing";
 import type { OctaveBandData } from "@/lib/conversions";
 
 interface DocumentUploaderProps {
@@ -24,12 +22,9 @@ interface DocumentUploaderProps {
 
 type UploadState = "idle" | "processing" | "success" | "error";
 
-// Get stored API key from localStorage
-const getStoredApiKey = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("gemini_api_key") || "";
-  }
-  return "";
+// Get API key from environment variable
+const getApiKey = () => {
+  return process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 };
 
 export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: DocumentUploaderProps) {
@@ -38,17 +33,14 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
   const [showPasteInput, setShowPasteInput] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [useAI, setUseAI] = useState(false);
-  const [apiKey, setApiKey] = useState(getStoredApiKey);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
   
-  // Save API key to localStorage
-  const saveApiKey = useCallback((key: string) => {
-    setApiKey(key);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("gemini_api_key", key);
-    }
-    if (key) {
-      initializeGemini(key);
+  // Check if API key is configured
+  useEffect(() => {
+    const apiKey = getApiKey();
+    setHasApiKey(!!apiKey && apiKey !== "your_api_key_here");
+    if (apiKey && apiKey !== "your_api_key_here") {
+      initializeGemini(apiKey);
     }
   }, []);
 
@@ -83,8 +75,9 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
       let result: ParseResult;
       const isImage = file.type.startsWith("image/");
       const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const apiKey = getApiKey();
       
-      if (useAI && apiKey) {
+      if (useAI && hasApiKey) {
         // Use AI-powered extraction
         if (isImage) {
           result = await parseImageWithVision(file, apiKey);
@@ -99,7 +92,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
         result = await parseFile(file);
         
         // If no patterns found and it's a PDF or image, suggest using AI
-        if (!result.success && (isPDF || isImage)) {
+        if (!result.success && (isPDF || isImage) && hasApiKey) {
           result.warnings.push("No patterns found. Try enabling AI extraction for image-based documents.");
         }
       }
@@ -119,7 +112,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
         warnings: [],
       });
     }
-  }, [useAI, apiKey, processExtractedData]);
+  }, [useAI, hasApiKey, processExtractedData]);
   
   // Handle pasted text
   const handlePaste = useCallback(() => {
@@ -198,38 +191,22 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
             Import Sound Data
           </CardTitle>
           
-          {/* AI Toggle */}
-          <div className="flex items-center gap-2">
+          {/* AI Toggle - only show if API key is configured */}
+          {hasApiKey && (
             <Button
               variant={useAI ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                if (!useAI && !apiKey) {
-                  setShowApiKeyInput(true);
-                }
-                setUseAI(!useAI);
-              }}
+              onClick={() => setUseAI(!useAI)}
               className={useAI ? "bg-[#4A3AFF] hover:bg-[#4A3AFF]/80" : ""}
             >
               <Sparkles className="w-4 h-4 mr-1" />
               AI
             </Button>
-            {useAI && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                className="px-2"
-                title="Configure API Key"
-              >
-                <Key className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+          )}
         </div>
         
         {/* AI info banner */}
-        {useAI && (
+        {useAI && hasApiKey && (
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
             <Eye className="w-3 h-3" />
             AI vision enabled - can extract from images & scanned PDFs
@@ -238,44 +215,6 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* API Key Input */}
-        {showApiKeyInput && useAI && (
-          <div className="p-3 bg-muted/50 rounded-lg space-y-2">
-            <Label htmlFor="api-key" className="text-sm font-medium">Gemini API Key</Label>
-            <div className="flex gap-2">
-              <Input
-                id="api-key"
-                type="password"
-                placeholder="Enter your Gemini API key"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                size="sm"
-                onClick={() => {
-                  saveApiKey(apiKey);
-                  setShowApiKeyInput(false);
-                }}
-                disabled={!apiKey}
-              >
-                Save
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Get a free API key from{" "}
-              <a 
-                href="https://aistudio.google.com/apikey" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[#4A3AFF] hover:underline"
-              >
-                Google AI Studio
-              </a>
-            </p>
-          </div>
-        )}
-        
         {/* Dropzone or Paste Input */}
         {showPasteInput ? (
           <div className="space-y-3">
