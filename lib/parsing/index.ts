@@ -30,3 +30,14 @@ export {
   parseText,
   parseFile,
 } from "./pdf-parser";
+
+// Vision-based parsing (Gemini AI)
+export {
+  initializeGemini,
+  isGeminiInitialized,
+  extractSoundDataFromImage,
+  fileToBase64,
+  pdfPageToImage,
+  parsePDFWithVision,
+  parseImageWithVision,
+} from "./vision-parser";
