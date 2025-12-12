@@ -1,65 +1,119 @@
-import Image from "next/image";
+import { SoundConverter } from "@/components/sound";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
+              <svg
+                className="w-5 h-5 text-primary-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.414a5 5 0 001.414-7.072m-2.828 9.9a9 9 0 010-12.728"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-body-md font-bold text-foreground">Sound Agent</h1>
+              <p className="text-micro text-muted-foreground">HVAC Sound Analysis Tool</p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Hero Section */}
+          <div className="text-center space-y-2">
+            <h2 className="text-h4 font-bold text-foreground">
+              HVAC Sound Analysis Made Simple
+            </h2>
+            <p className="text-body-sm text-muted-foreground max-w-2xl mx-auto">
+              Convert between sones, NC ratings, dBA, and octave band data. 
+              Analyze equipment sound data and check compliance with ASHRAE recommendations.
+            </p>
+          </div>
+
+          {/* Sound Converter */}
+          <div className="flex justify-center">
+            <SoundConverter />
+          </div>
+
+          {/* Quick Reference */}
+          <div className="grid md:grid-cols-3 gap-4 mt-8">
+            <QuickRefCard
+              title="NC Ratings"
+              items={[
+                { label: "NC-25", desc: "Very quiet (private offices)" },
+                { label: "NC-35", desc: "Quiet (conference rooms)" },
+                { label: "NC-45", desc: "Moderate (retail stores)" },
+              ]}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <QuickRefCard
+              title="Typical Sones"
+              items={[
+                { label: "< 1 sone", desc: "Very quiet equipment" },
+                { label: "1-4 sones", desc: "Typical HVAC equipment" },
+                { label: "> 8 sones", desc: "Loud equipment" },
+              ]}
+            />
+            <QuickRefCard
+              title="dBA Levels"
+              items={[
+                { label: "30 dBA", desc: "Quiet library" },
+                { label: "45 dBA", desc: "Typical office" },
+                { label: "60 dBA", desc: "Normal conversation" },
+              ]}
+            />
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border mt-auto">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <p className="text-micro text-muted-foreground">
+              Sound Agent by BuildVision • Labs Tool
+            </p>
+            <p className="text-micro text-muted-foreground">
+              Conversions are approximate. Verify critical calculations.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function QuickRefCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: { label: string; desc: string }[];
+}) {
+  return (
+    <div className="p-4 rounded-lg border border-border bg-card">
+      <h3 className="font-bold text-body-sm mb-3">{title}</h3>
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li key={item.label} className="flex justify-between text-detail">
+            <span className="font-medium">{item.label}</span>
+            <span className="text-muted-foreground">{item.desc}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

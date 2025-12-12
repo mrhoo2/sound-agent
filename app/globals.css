@@ -1,26 +1,178 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
+/* BuildVision Design System - Sound Agent */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: var(--font-geist-mono);
+  
+  /* Core shadcn theme bindings */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* BuildVision Color Tokens */
+  --color-bv-blue: #4A3AFF;
+  --color-bv-blue-100: #E9EEFF;
+  --color-bv-blue-200: #ABBBFF;
+  --color-bv-blue-300: #7383FF;
+  --color-bv-blue-400: #4A3AFF;
+  --color-bv-blue-500: #3F31DE;
+  --color-bv-blue-600: #3528BE;
+  --color-bv-blue-700: #201B80;
+  --color-bv-blue-800: #171063;
+  --color-bv-blue-900: #06042E;
+  
+  /* Semantic Colors */
+  --color-success: #16DA7C;
+  --color-success-bg: #B2FFDA;
+  --color-warning: #FFCC17;
+  --color-warning-bg: #FFECAA;
+  --color-error: #EC4343;
+  --color-error-bg: #FFDADA;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+  
+  /* BuildVision Light Theme */
+  --background: #FFFFFF;
+  --foreground: #2A2A2F;
+  --card: #F8F8F8;
+  --card-foreground: #2A2A2F;
+  --popover: #FFFFFF;
+  --popover-foreground: #2A2A2F;
+  --primary: #4A3AFF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F8F8F8;
+  --secondary-foreground: #2A2A2F;
+  --muted: #F8F8F8;
+  --muted-foreground: #6C6C71;
+  --accent: #E9EEFF;
+  --accent-foreground: #4A3AFF;
+  --destructive: #EC4343;
+  --border: #C9CBCF;
+  --input: #C9CBCF;
+  --ring: #4A3AFF;
+  
+  /* Chart colors using BV palette */
+  --chart-1: #4A3AFF;
+  --chart-2: #16DA7C;
+  --chart-3: #FFCC17;
+  --chart-4: #CC98F6;
+  --chart-5: #EC4343;
+  
+  /* Sidebar */
+  --sidebar: #F8F8F8;
+  --sidebar-foreground: #2A2A2F;
+  --sidebar-primary: #4A3AFF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E9EEFF;
+  --sidebar-accent-foreground: #4A3AFF;
+  --sidebar-border: #C9CBCF;
+  --sidebar-ring: #4A3AFF;
+  
+  /* BuildVision Neutral Scale */
+  --neutral-50: #F8F8F8;
+  --neutral-100: #EDEDED;
+  --neutral-200: #C9CBCF;
+  --neutral-300: #AEB0B7;
+  --neutral-400: #9E9EA5;
+  --neutral-500: #8C8C92;
+  --neutral-600: #6C6C71;
+  --neutral-700: #535257;
+  --neutral-800: #2A2A2F;
+  --neutral-900: #18191B;
+}
+
+.dark {
+  --background: #18191B;
+  --foreground: #F8F8F8;
+  --card: #2A2A2F;
+  --card-foreground: #F8F8F8;
+  --popover: #2A2A2F;
+  --popover-foreground: #F8F8F8;
+  --primary: #7383FF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #2A2A2F;
+  --secondary-foreground: #F8F8F8;
+  --muted: #2A2A2F;
+  --muted-foreground: #9E9EA5;
+  --accent: #201B80;
+  --accent-foreground: #ABBBFF;
+  --destructive: #EC4343;
+  --border: #535257;
+  --input: #535257;
+  --ring: #7383FF;
+  --chart-1: #7383FF;
+  --chart-2: #16DA7C;
+  --chart-3: #FFCC17;
+  --chart-4: #CC98F6;
+  --chart-5: #EC4343;
+  --sidebar: #2A2A2F;
+  --sidebar-foreground: #F8F8F8;
+  --sidebar-primary: #7383FF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #201B80;
+  --sidebar-accent-foreground: #ABBBFF;
+  --sidebar-border: #535257;
+  --sidebar-ring: #7383FF;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* BuildVision Typography Classes */
+@layer utilities {
+  .text-h1 { font-size: 64px; line-height: 88px; }
+  .text-h2 { font-size: 56px; line-height: 72px; }
+  .text-h3 { font-size: 48px; line-height: 56px; }
+  .text-h4 { font-size: 36px; line-height: 48px; }
+  .text-h5 { font-size: 24px; line-height: 32px; }
+  .text-body-lg { font-size: 24px; line-height: 38px; }
+  .text-body-md { font-size: 18px; line-height: 28px; }
+  .text-body-sm { font-size: 16px; line-height: 22px; }
+  .text-detail { font-size: 14px; line-height: 18px; }
+  .text-micro { font-size: 12px; line-height: 16px; }
 }
