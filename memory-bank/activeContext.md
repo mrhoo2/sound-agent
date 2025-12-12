@@ -1,7 +1,7 @@
 # Active Context: Sound Agent
 
 ## Current Session Focus
-**ASHRAE Room Recommendations & Compliance Checker** - Phase 4 Implementation
+**Session Complete** - ASHRAE Integration & GitHub Push
 
 ## What Was Accomplished This Session
 
@@ -20,40 +20,44 @@
   - Margin calculations showing NC points over/under target
   - BuildVision color palette: Success Green (#16DA7C), Warning Yellow (#FFCC17), Error Red (#EC4343)
 
-### Integration ✅
-- Integrated ComplianceChecker into SoundConverter component
-- Compliance checker always visible, updates when NC rating is calculated
-- Works with all input modes (sones, NC, dBA, octave bands)
+### Compliance Thresholds Fixed ✅
+- Marginal: 1-2 NC points over target (borderline)
+- Fail: 3+ NC points over target
+
+### GitHub Repository ✅
+- Pushed to https://github.com/mrhoo2/sound-agent
+- Configured to use personal SSH key (`~/.ssh/id_ed25519_personal`)
 
 ## Current State
-- **Development server**: Running on `http://localhost:3000`
+- **GitHub**: https://github.com/mrhoo2/sound-agent
+- **Development server**: `http://localhost:3000` (run `bun dev`)
 - **Application**: Sound unit converter with NC curve visualization + ASHRAE compliance checking
-- **New feature**: Compare equipment NC against ASHRAE room recommendations
-
-## Recent Decisions
-1. **Room type database structure** - Used category groupings with icons for easy navigation
-2. **Four-level compliance status** - Excellent (below min), Good (within range), Marginal (up to 5 over), Fail (more than 5 over)
-3. **Always-visible compliance checker** - Shows below converter, prompts user to select room type
-
-## Active Files
-- `lib/ashrae/room-types.ts` - ASHRAE room type database and compliance functions
-- `lib/ashrae/index.ts` - Module exports
-- `components/sound/ComplianceChecker.tsx` - Compliance UI component
-- `components/sound/SoundConverter.tsx` - Updated with ComplianceChecker integration
-- `components/sound/index.ts` - Updated exports
 
 ## Next Steps (Priority Order)
-1. **Document parsing** - PDF/image upload for spec sheet extraction
-2. **Deploy to Vercel** - Initial deployment
+1. **Document parsing** - PDF/image upload for spec sheet extraction (Phase 3)
+2. **Deploy to Vercel** - When ready for production
 3. **Enhance compliance checker** - Add multiple room comparison, export report
 
-## Technical Notes
-- Compliance status uses 4 levels: excellent, good, marginal, fail
-- NCComplianceBar visualizes equipment NC position on a scale from NC-15 to NC-70
-- Room categories use emoji icons for visual clarity in dropdown
-- ComplianceChecker receives equipmentNC from parent and manages room selection internally
+## Key Technical Notes
 
-## Files Created This Session
+### SSH Configuration for mrhoo2 Account
+This repo is configured to use the personal SSH key:
+```bash
+git config core.sshCommand "ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=yes"
+```
+
+### Compliance Status Levels
+- **Excellent**: Equipment NC ≤ room's minimum NC (quieter than required)
+- **Pass**: Equipment NC within the room's NC range
+- **Marginal**: Equipment exceeds target by 1-2 NC points
+- **Fail**: Equipment exceeds target by 3+ NC points
+
+### Test Data for NC-35
+```
+63 Hz: 58, 125 Hz: 50, 250 Hz: 43, 500 Hz: 38, 1k Hz: 35, 2k Hz: 33, 4k Hz: 32, 8k Hz: 31
+```
+
+## Files Modified This Session
 ```
 lib/ashrae/
 ├── room-types.ts    # NEW - ASHRAE room database + compliance logic
@@ -67,4 +71,4 @@ components/sound/
 
 ---
 *Last updated: December 12, 2025*
-*Session: ASHRAE Integration & Compliance Checker*
+*Session: ASHRAE Integration & GitHub Push*
