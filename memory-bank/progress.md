@@ -1,7 +1,7 @@
 # Progress: Sound Agent
 
 ## Current Status
-**Phase 4: ASHRAE Integration** - ✅ COMPLETE
+**Phase 3: Document Parsing** - ✅ COMPLETE
 
 ## Completed Phases
 
@@ -40,6 +40,20 @@
 | Integration with SoundConverter | ✅ Complete | Dec 12, 2025 |
 | Browser testing verified | ✅ Complete | Dec 12, 2025 |
 
+### Phase 3: Document Parsing ✅
+| Milestone | Status | Date |
+|-----------|--------|------|
+| react-dropzone installed | ✅ Complete | Dec 12, 2025 |
+| pdfjs-dist installed | ✅ Complete | Dec 12, 2025 |
+| Parsing types defined | ✅ Complete | Dec 12, 2025 |
+| Pattern recognition (NC, dBA, sones) | ✅ Complete | Dec 12, 2025 |
+| Octave band extraction | ✅ Complete | Dec 12, 2025 |
+| PDF text extraction | ✅ Complete | Dec 12, 2025 |
+| DocumentUploader component | ✅ Complete | Dec 12, 2025 |
+| Paste text functionality | ✅ Complete | Dec 12, 2025 |
+| Auto-populate converter | ✅ Complete | Dec 12, 2025 |
+| Integration with SoundConverter | ✅ Complete | Dec 12, 2025 |
+
 ### Phase 4: ASHRAE Integration ✅
 | Milestone | Status | Date |
 |-----------|--------|------|
@@ -50,15 +64,6 @@
 | Margin calculations | ✅ Complete | Dec 12, 2025 |
 
 ## Upcoming Phases
-
-### Phase 3: Document Parsing
-| Milestone | Status | Notes |
-|-----------|--------|-------|
-| File upload component | 🔲 Planned | react-dropzone |
-| PDF text extraction | 🔲 Planned | pdf-parse or pdfjs-dist |
-| Sound data pattern recognition | 🔲 Planned | Regex patterns for specs |
-| AI-powered extraction | 🔲 Planned | For complex layouts |
-| Image/screenshot handling | 🔲 Planned | OCR or vision API |
 
 ### Phase 5: Deploy & Integrate
 | Milestone | Status | Notes |
@@ -77,26 +82,34 @@
 5. **NC Curve Visualization** - Line chart with NC curve overlay for comparison
 6. **ASHRAE Room Recommendations** - 45+ room types across 10 categories
 7. **Compliance Checker** - Pass/fail indicators with margin calculations
+8. **Document Parsing** - PDF upload and text paste with auto-extraction
+9. **Pattern Recognition** - Extract NC, dBA, sones, octave bands from text
 
 ## Known Limitations
 1. Sones ↔ dBA conversions are approximate (frequency-dependent in reality)
 2. NC ↔ dBA uses typical +6 dB relationship (varies by spectrum)
-3. No document parsing yet
+3. PDF parsing requires selectable text (image-based PDFs need OCR)
 4. Not deployed to production yet
 
 ## Files Created This Session
 ```
 sound-agent/
 ├── lib/
-│   └── ashrae/
-│       ├── room-types.ts    # NEW - ASHRAE room database
-│       └── index.ts         # NEW - Module exports
+│   └── parsing/
+│       ├── types.ts        # NEW - Parsing type definitions
+│       ├── patterns.ts     # NEW - Sound data regex patterns
+│       ├── pdf-parser.ts   # NEW - PDF text extraction
+│       └── index.ts        # NEW - Module exports
 ├── components/
 │   └── sound/
-│       ├── ComplianceChecker.tsx  # NEW - Compliance UI
-│       ├── SoundConverter.tsx     # UPDATED - Added compliance
-│       └── index.ts               # UPDATED - Added exports
+│       ├── DocumentUploader.tsx  # NEW - File upload component
+│       ├── SoundConverter.tsx    # UPDATED - Added DocumentUploader
+│       └── index.ts              # UPDATED - Added exports
 ```
+
+## Dependencies Added (Phase 3)
+- `react-dropzone@14.3.8` - File drag & drop
+- `pdfjs-dist@5.4.449` - PDF text extraction
 
 ## ASHRAE Room Categories
 - 🏠 Residential (4 room types)
@@ -117,6 +130,7 @@ sound-agent/
 | Dec 12, 2025 | Project init + Core conversions | Working converter at localhost:3000 |
 | Dec 12, 2025 | NC Curve Visualization | Chart showing user data vs NC curves |
 | Dec 12, 2025 | ASHRAE Integration | Compliance checker with room recommendations |
+| Dec 12, 2025 | Document Parsing | PDF/text upload with pattern extraction |
 
 ---
 *Last updated: December 12, 2025*

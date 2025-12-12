@@ -1,50 +1,94 @@
 # Active Context: Sound Agent
 
 ## Current Session Focus
-**Session Complete** - ASHRAE Integration & GitHub Push
+**Phase 3: Document Parsing** - ✅ COMPLETE
 
 ## What Was Accomplished This Session
 
-### ASHRAE Integration ✅
-- Created comprehensive ASHRAE room type database (`lib/ashrae/room-types.ts`)
-  - 10 room categories: Residential, Office, Conference, Education, Healthcare, Hospitality, Retail, Worship, Entertainment, Industrial
-  - 45+ room types with NC min/max ranges based on ASHRAE Handbook
-  - Helper functions: `getRoomTypesByCategory()`, `getRoomTypeById()`, `checkCompliance()`
-  
-### Compliance Checker Component ✅
-- Created `ComplianceChecker.tsx` component with:
-  - Grouped dropdown selector for room types (categorized with icons)
-  - Real-time compliance checking against selected room type
-  - Visual status indicators: Excellent (✓✓), Pass (✓), Marginal (⚠), Fail (✗)
-  - NC compliance bar showing equipment position relative to target range
-  - Margin calculations showing NC points over/under target
-  - BuildVision color palette: Success Green (#16DA7C), Warning Yellow (#FFCC17), Error Red (#EC4343)
+### Document Parsing Implementation ✅
+- Created comprehensive parsing library (`lib/parsing/`)
+  - `types.ts` - TypeScript interfaces for extracted data, parse results
+  - `patterns.ts` - Regex patterns for sound data extraction (NC, dBA, sones, octave bands)
+  - `pdf-parser.ts` - PDF text extraction using pdfjs-dist
+  - `index.ts` - Module exports
 
-### Compliance Thresholds Fixed ✅
-- Marginal: 1-2 NC points over target (borderline)
-- Fail: 3+ NC points over target
+### Pattern Recognition Features ✅
+- **Octave Band Extraction**:
+  - Table format detection (8 frequencies in a row)
+  - Individual frequency-value pair matching
+  - Smart sequence detection (decreasing trend typical of sound data)
+- **Single-Number Ratings**:
+  - NC rating patterns (NC-35, NC 35, Noise Criteria: 35)
+  - dBA patterns (45 dBA, 45 dB(A))
+  - Sones patterns (2.5 sones)
+- **Equipment Info Extraction**:
+  - Major HVAC manufacturers (Trane, Carrier, Daikin, etc.)
+  - Model number patterns
+  - Equipment type detection (AHU, RTU, FCU, VAV, etc.)
 
-### GitHub Repository ✅
-- Pushed to https://github.com/mrhoo2/sound-agent
-- Configured to use personal SSH key (`~/.ssh/id_ed25519_personal`)
+### DocumentUploader Component ✅
+- Created `DocumentUploader.tsx` with react-dropzone
+- Features:
+  - Drag & drop file upload (PDF, TXT, CSV)
+  - Paste text from spec sheets
+  - Auto-detect 8 octave band values from pasted text
+  - Visual feedback (processing, success, error states)
+  - Extracted data summary display
+  - Confidence indicator
+  - Consistent styling with other cards (light theme)
+
+### Integration ✅
+- DocumentUploader integrated into SoundConverter
+- Auto-populates octave band inputs when data extracted
+- Auto-converts and shows results immediately
+- Switches to Octave Bands tab when data imported
 
 ## Current State
+- **Dev Server**: Running at `http://localhost:3000`
 - **GitHub**: https://github.com/mrhoo2/sound-agent
-- **Development server**: `http://localhost:3000` (run `bun dev`)
-- **Application**: Sound unit converter with NC curve visualization + ASHRAE compliance checking
+- **TypeScript**: Compiles without errors
+- **All 4 phases complete** (Foundation, Core, Visualization, ASHRAE, Document Parsing)
 
-## Next Steps (Priority Order)
-1. **Document parsing** - PDF/image upload for spec sheet extraction (Phase 3)
-2. **Deploy to Vercel** - When ready for production
-3. **Enhance compliance checker** - Add multiple room comparison, export report
+## Files Created This Session
+```
+lib/parsing/
+├── types.ts        # NEW - Parsing type definitions
+├── patterns.ts     # NEW - Sound data regex patterns
+├── pdf-parser.ts   # NEW - PDF text extraction
+└── index.ts        # NEW - Module exports
+
+components/sound/
+├── DocumentUploader.tsx  # NEW - File upload component
+├── SoundConverter.tsx    # UPDATED - Added DocumentUploader
+└── index.ts              # UPDATED - Added exports
+```
+
+## Dependencies Added
+- `react-dropzone@14.3.8` - File drag & drop
+- `pdfjs-dist@5.4.449` - PDF text extraction
+
+## Test Data for Document Parsing
+Paste this to test octave band extraction:
+```
+58 50 43 38 35 33 32 31
+```
+This should be recognized as NC-35 octave band values.
+
+## Next Steps (Phase 5: Deploy)
+1. **Deploy to Vercel** - Production deployment
+2. **Add to BuildVision Labs** - Configure in labs.config.ts
+3. **Production testing** - Cross-browser verification
+4. **Documentation** - User guide
 
 ## Key Technical Notes
 
 ### SSH Configuration for mrhoo2 Account
-This repo is configured to use the personal SSH key:
 ```bash
 git config core.sshCommand "ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=yes"
 ```
+
+### PDF.js Worker Setup
+Using CDN for worker: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`
 
 ### Compliance Status Levels
 - **Excellent**: Equipment NC ≤ room's minimum NC (quieter than required)
@@ -52,23 +96,6 @@ git config core.sshCommand "ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=
 - **Marginal**: Equipment exceeds target by 1-2 NC points
 - **Fail**: Equipment exceeds target by 3+ NC points
 
-### Test Data for NC-35
-```
-63 Hz: 58, 125 Hz: 50, 250 Hz: 43, 500 Hz: 38, 1k Hz: 35, 2k Hz: 33, 4k Hz: 32, 8k Hz: 31
-```
-
-## Files Modified This Session
-```
-lib/ashrae/
-├── room-types.ts    # NEW - ASHRAE room database + compliance logic
-└── index.ts         # NEW - Module exports
-
-components/sound/
-├── ComplianceChecker.tsx  # NEW - Compliance UI component
-├── SoundConverter.tsx     # UPDATED - Added ComplianceChecker
-└── index.ts               # UPDATED - Added exports
-```
-
 ---
 *Last updated: December 12, 2025*
-*Session: ASHRAE Integration & GitHub Push*
+*Session: Phase 3 - Document Parsing*

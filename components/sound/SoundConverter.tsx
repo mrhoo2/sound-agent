@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/conversions";
 import { NCCurveChart } from "./NCCurveChart";
 import { ComplianceChecker } from "./ComplianceChecker";
+import { DocumentUploader } from "./DocumentUploader";
 
 type InputMode = "sones" | "nc" | "dba" | "octave";
 
@@ -63,6 +64,17 @@ export function SoundConverter() {
     setOctaveBands({});
     setResult(null);
   };
+
+  // Handle data extracted from document uploader
+  const handleOctaveBandsExtracted = useCallback((bands: OctaveBandData) => {
+    // Set the octave bands
+    setOctaveBands(bands);
+    // Switch to octave bands tab
+    setInputMode("octave");
+    // Auto-convert the data
+    const converted = convertSoundMeasurement({ octaveBands: bands });
+    setResult(converted);
+  }, []);
 
   return (
     <Card className="w-full max-w-2xl">
@@ -249,6 +261,11 @@ export function SoundConverter() {
         {/* ASHRAE Compliance Checker */}
         <div className="mt-6">
           <ComplianceChecker equipmentNC={result?.nc} />
+        </div>
+
+        {/* Document Uploader */}
+        <div className="mt-6">
+          <DocumentUploader onOctaveBandsExtracted={handleOctaveBandsExtracted} />
         </div>
       </CardContent>
     </Card>
