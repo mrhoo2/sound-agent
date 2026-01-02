@@ -25,44 +25,71 @@ export function isGeminiInitialized(): boolean {
 
 /**
  * The prompt for extracting sound data from images
+ * Enhanced for tabular sound schedules common in HVAC engineering documents
  */
-const EXTRACTION_PROMPT = `You are analyzing an HVAC equipment specification sheet or sound data document.
+const EXTRACTION_PROMPT = `You are an expert at reading HVAC equipment specification sheets and sound data schedules from engineering drawings.
 
-Extract ALL sound-related data you can find. Look for:
+Analyze this image and extract ALL sound-related data. Common formats include:
 
-1. **Octave Band Sound Levels** (dB values at frequencies: 63 Hz, 125 Hz, 250 Hz, 500 Hz, 1000 Hz, 2000 Hz, 4000 Hz, 8000 Hz)
-2. **NC Rating** (Noise Criteria rating, e.g., NC-35)
-3. **dBA Level** (A-weighted decibel level)
-4. **Sones** (perceived loudness value)
-5. **Equipment Info** (manufacturer, model number, equipment type)
+**SOUND DATA SCHEDULES (Tables)**
+Look for tables with:
+- Headers showing frequencies: 63, 125, 250, 500, 1000, 2000, 4000, 8000 Hz
+- Row labels like: Supply, Return, Casing, Inlet, Outlet, Discharge, Radiated
+- Equipment identifiers: AHU-1, RTU-2, FCU-3, etc.
+- Sound Power Level (LW, Lw, SWL) in dB re 10^-12 W
+- Sound Pressure Level (LP, Lp, SPL) in dB
+
+**EXAMPLE TABLE FORMAT:**
+| Equipment | 63 | 125 | 250 | 500 | 1000 | 2000 | 4000 | 8000 |
+|-----------|----|----|-----|-----|------|------|------|------|
+| Supply    | 83 | 88 | 93  | 87  | 86   | 82   | 83   | 76   |
+| Return    | 75 | 75 | 77  | 73  | 70   | 72   | 72   | 64   |
+
+**SPEC SHEETS**
+Look for:
+- NC Rating (Noise Criteria, e.g., NC-35)
+- dBA Level (A-weighted sound level)
+- Sones (perceived loudness)
+- Manufacturer and model information
 
 Return the data as JSON in this exact format:
 {
-  "octaveBands": {
-    "hz63": <number or null>,
-    "hz125": <number or null>,
-    "hz250": <number or null>,
-    "hz500": <number or null>,
-    "hz1000": <number or null>,
-    "hz2000": <number or null>,
-    "hz4000": <number or null>,
-    "hz8000": <number or null>
-  },
-  "ncRating": <number or null>,
-  "dba": <number or null>,
-  "sones": <number or null>,
+  "equipmentRows": [
+    {
+      "equipmentId": "<equipment identifier like AHU-1 or null>",
+      "componentName": "<component like Supply, Return, Casing, Inlet, Outlet, or null>",
+      "dataType": "soundPower" | "soundPressure" | "unknown",
+      "octaveBands": {
+        "hz63": <number or null>,
+        "hz125": <number or null>,
+        "hz250": <number or null>,
+        "hz500": <number or null>,
+        "hz1000": <number or null>,
+        "hz2000": <number or null>,
+        "hz4000": <number or null>,
+        "hz8000": <number or null>
+      },
+      "ncRating": <number or null>,
+      "dba": <number or null>,
+      "sones": <number or null>
+    }
+  ],
   "equipment": {
     "manufacturer": <string or null>,
     "model": <string or null>,
-    "type": <string or null>
+    "type": <string like "AHU", "RTU", "FCU", "Fan Coil", "Air Handler", or null>
   },
   "confidence": "high" | "medium" | "low",
-  "notes": <any relevant observations about the data>
+  "notes": "<any relevant observations about the data>"
 }
 
-If you cannot find certain data, set those fields to null. If the image doesn't contain sound data at all, return all null values with confidence "low".
-
-IMPORTANT: Only return valid JSON, no other text.`;
+IMPORTANT RULES:
+1. Extract EACH ROW of tabular data as a separate entry in "equipmentRows"
+2. If the table shows multiple components (Supply, Return, Casing), create one entry per row
+3. If values have decimals, include them
+4. If a cell is empty or has a dash, use null
+5. Only return valid JSON, no other text
+6. Even if you can only extract partial data, return what you find with appropriate confidence level`;
 
 /**
  * Extract sound data from an image using Gemini Vision
@@ -82,8 +109,8 @@ export async function extractSoundDataFromImage(
   }
 
   try {
-    // Use Gemini 2.5 Flash for vision
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Use Gemini 2.5 Flash for vision - latest model with best performance
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const result = await model.generateContent([
       {
@@ -108,17 +135,98 @@ export async function extractSoundDataFromImage(
 
     const parsed = JSON.parse(jsonStr);
 
-    // Build ExtractedSoundData from the response
-    const extractedData: ExtractedSoundData = {
-      source: {
-        fileName,
-        extractedAt: new Date(),
-        confidence: parsed.confidence || "medium",
-      },
-    };
+    // Build ExtractedSoundData array from the response
+    const extractedDataList: ExtractedSoundData[] = [];
+    const warnings: string[] = [];
 
-    // Add octave bands if found
-    if (parsed.octaveBands) {
+    if (parsed.notes) {
+      warnings.push(`AI Notes: ${parsed.notes}`);
+    }
+
+    // Process equipment rows (new multi-row format)
+    if (parsed.equipmentRows && Array.isArray(parsed.equipmentRows)) {
+      for (const row of parsed.equipmentRows) {
+        const extractedData: ExtractedSoundData = {
+          source: {
+            fileName,
+            extractedAt: new Date(),
+            confidence: parsed.confidence || "medium",
+          },
+        };
+
+        // Add equipment identifier and component name
+        if (row.equipmentId || row.componentName) {
+          extractedData.equipment = {
+            manufacturer: parsed.equipment?.manufacturer || undefined,
+            model: parsed.equipment?.model || undefined,
+            type: parsed.equipment?.type || undefined,
+          };
+          
+          // Store component info in a way the UI can use
+          if (row.equipmentId) {
+            extractedData.equipment.model = row.equipmentId + (row.componentName ? ` - ${row.componentName}` : "");
+          } else if (row.componentName) {
+            extractedData.equipment.type = row.componentName;
+          }
+        }
+
+        // Add data type info
+        if (row.dataType && row.dataType !== "unknown") {
+          extractedData.dataType = row.dataType as "soundPower" | "soundPressure";
+        }
+
+        // Add octave bands if found
+        if (row.octaveBands) {
+          const bands = row.octaveBands;
+          const hasAnyBand = Object.values(bands).some((v) => v !== null);
+          if (hasAnyBand) {
+            extractedData.octaveBands = {
+              hz63: bands.hz63 ?? undefined,
+              hz125: bands.hz125 ?? undefined,
+              hz250: bands.hz250 ?? undefined,
+              hz500: bands.hz500 ?? undefined,
+              hz1000: bands.hz1000 ?? undefined,
+              hz2000: bands.hz2000 ?? undefined,
+              hz4000: bands.hz4000 ?? undefined,
+              hz8000: bands.hz8000 ?? undefined,
+            };
+          }
+        }
+
+        // Add single-number ratings from the row
+        if (row.ncRating !== null && row.ncRating !== undefined) {
+          extractedData.ncRating = row.ncRating;
+        }
+        if (row.dba !== null && row.dba !== undefined) {
+          extractedData.dba = row.dba;
+        }
+        if (row.sones !== null && row.sones !== undefined) {
+          extractedData.sones = row.sones;
+        }
+
+        // Check if this row has any useful data
+        const hasData =
+          extractedData.octaveBands ||
+          extractedData.ncRating ||
+          extractedData.dba ||
+          extractedData.sones;
+
+        if (hasData) {
+          extractedDataList.push(extractedData);
+        }
+      }
+    }
+    
+    // Fallback: handle old single-row format for backwards compatibility
+    if (extractedDataList.length === 0 && parsed.octaveBands) {
+      const extractedData: ExtractedSoundData = {
+        source: {
+          fileName,
+          extractedAt: new Date(),
+          confidence: parsed.confidence || "medium",
+        },
+      };
+
       const bands = parsed.octaveBands;
       const hasAnyBand = Object.values(bands).some((v) => v !== null);
       if (hasAnyBand) {
@@ -133,60 +241,60 @@ export async function extractSoundDataFromImage(
           hz8000: bands.hz8000 ?? undefined,
         };
       }
-    }
 
-    // Add single-number ratings
-    if (parsed.ncRating !== null && parsed.ncRating !== undefined) {
-      extractedData.ncRating = parsed.ncRating;
-    }
-    if (parsed.dba !== null && parsed.dba !== undefined) {
-      extractedData.dba = parsed.dba;
-    }
-    if (parsed.sones !== null && parsed.sones !== undefined) {
-      extractedData.sones = parsed.sones;
-    }
+      if (parsed.ncRating !== null && parsed.ncRating !== undefined) {
+        extractedData.ncRating = parsed.ncRating;
+      }
+      if (parsed.dba !== null && parsed.dba !== undefined) {
+        extractedData.dba = parsed.dba;
+      }
+      if (parsed.sones !== null && parsed.sones !== undefined) {
+        extractedData.sones = parsed.sones;
+      }
 
-    // Add equipment info
-    if (parsed.equipment) {
-      const eq = parsed.equipment;
-      if (eq.manufacturer || eq.model || eq.type) {
-        extractedData.equipment = {
-          manufacturer: eq.manufacturer || undefined,
-          model: eq.model || undefined,
-          type: eq.type || undefined,
-        };
+      if (parsed.equipment) {
+        const eq = parsed.equipment;
+        if (eq.manufacturer || eq.model || eq.type) {
+          extractedData.equipment = {
+            manufacturer: eq.manufacturer || undefined,
+            model: eq.model || undefined,
+            type: eq.type || undefined,
+          };
+        }
+      }
+
+      const hasData =
+        extractedData.octaveBands ||
+        extractedData.ncRating ||
+        extractedData.dba ||
+        extractedData.sones;
+
+      if (hasData) {
+        extractedDataList.push(extractedData);
       }
     }
 
     // Check if we found anything useful
-    const hasData =
-      extractedData.octaveBands ||
-      extractedData.ncRating ||
-      extractedData.dba ||
-      extractedData.sones;
-
-    const warnings: string[] = [];
-    if (parsed.notes) {
-      warnings.push(`AI Notes: ${parsed.notes}`);
-    }
-
-    if (!hasData) {
+    if (extractedDataList.length === 0) {
       return {
         success: false,
         data: [],
         errors: [],
-        warnings: ["No sound data found in the image. Make sure the image shows sound specifications."],
+        warnings: [
+          "No sound data found in the image. Make sure the image clearly shows a sound data schedule or spec sheet with octave band values.",
+        ],
       };
     }
 
     return {
       success: true,
-      data: [extractedData],
+      data: extractedDataList,
       errors: [],
       warnings,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Gemini extraction error:", error);
     return {
       success: false,
       data: [],

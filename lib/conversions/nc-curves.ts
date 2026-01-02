@@ -94,6 +94,51 @@ export function calculateNCRating(octaveBands: OctaveBandData): number {
     }
   }
   
-  // If exceeds all curves, return the highest
+  // If exceeds all curves, return the highest (70)
+  // Use exceedsNC70() to check if data exceeds the scale
   return 70;
+}
+
+/**
+ * Check if octave band data exceeds the NC-70 curve
+ * Returns true if any frequency band exceeds NC-70 values
+ */
+export function exceedsNC70(octaveBands: OctaveBandData): boolean {
+  const nc70 = NC_CURVES.find(c => c.rating === 70);
+  if (!nc70) return false;
+  
+  for (const freq of OCTAVE_BAND_FREQUENCIES) {
+    if (octaveBands[freq] > nc70.values[freq]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Get the amount by which data exceeds NC-70 at each frequency
+ * Returns an object with excess dB values (0 if not exceeded)
+ */
+export function getNC70Excess(octaveBands: OctaveBandData): OctaveBandData {
+  const nc70 = NC_CURVES.find(c => c.rating === 70);
+  if (!nc70) {
+    return { 63: 0, 125: 0, 250: 0, 500: 0, 1000: 0, 2000: 0, 4000: 0, 8000: 0 };
+  }
+  
+  const excess: OctaveBandData = { 63: 0, 125: 0, 250: 0, 500: 0, 1000: 0, 2000: 0, 4000: 0, 8000: 0 };
+  
+  for (const freq of OCTAVE_BAND_FREQUENCIES) {
+    const diff = octaveBands[freq] - nc70.values[freq];
+    excess[freq] = diff > 0 ? diff : 0;
+  }
+  
+  return excess;
+}
+
+/**
+ * Get the maximum amount by which data exceeds NC-70
+ */
+export function getMaxNC70Excess(octaveBands: OctaveBandData): number {
+  const excess = getNC70Excess(octaveBands);
+  return Math.max(...Object.values(excess));
 }

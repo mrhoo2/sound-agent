@@ -1,7 +1,7 @@
 # Progress: Sound Agent
 
 ## Current Status
-**Phase 3: Document Parsing** - ✅ COMPLETE
+**Phase 4.5: Split-Screen Layout & NC 70+ Warning** - ✅ COMPLETE
 
 ## Completed Phases
 
@@ -63,6 +63,27 @@
 | Pass/fail indicators | ✅ Complete | Dec 12, 2025 |
 | Margin calculations | ✅ Complete | Dec 12, 2025 |
 
+### Phase 3.5: AI Vision Extraction ✅
+| Milestone | Status | Date |
+|-----------|--------|------|
+| Gemini SDK integration | ✅ Complete | Dec 12, 2025 |
+| Upgraded to Gemini 2.5 Flash | ✅ Complete | Jan 2, 2026 |
+| Enhanced prompt for sound schedules | ✅ Complete | Jan 2, 2026 |
+| Multi-row extraction (Supply/Return/Casing) | ✅ Complete | Jan 2, 2026 |
+| Data type recognition (LW/LP) | ✅ Complete | Jan 2, 2026 |
+| Row selector UI in DocumentUploader | ✅ Complete | Jan 2, 2026 |
+
+### Phase 4.5: Split-Screen Layout & NC 70+ Warning ✅
+| Milestone | Status | Date |
+|-----------|--------|------|
+| Split-screen page layout | ✅ Complete | Jan 2, 2026 |
+| Left panel: Input options | ✅ Complete | Jan 2, 2026 |
+| Right panel: Results display | ✅ Complete | Jan 2, 2026 |
+| CRUD for saved data (add/edit/delete) | ✅ Complete | Jan 2, 2026 |
+| exceedsNC70() function | ✅ Complete | Jan 2, 2026 |
+| NC 70+ warning UI | ✅ Complete | Jan 2, 2026 |
+| Sound Power Level explanation | ✅ Complete | Jan 2, 2026 |
+
 ## Upcoming Phases
 
 ### Phase 5: Deploy & Integrate
@@ -84,11 +105,17 @@
 7. **Compliance Checker** - Pass/fail indicators with margin calculations
 8. **Document Parsing** - PDF upload and text paste with auto-extraction
 9. **Pattern Recognition** - Extract NC, dBA, sones, octave bands from text
+10. **AI Vision Extraction** - Gemini 2.5 Flash extracts sound data from images/screenshots
+11. **Multi-Row Support** - Extract multiple equipment configs (Supply/Return/Casing)
+12. **Data Type Recognition** - Distinguishes Sound Power Level vs Sound Pressure Level
+13. **Split-Screen Layout** - Left panel inputs, right panel results/chart
+14. **CRUD for Saved Data** - Add, edit, delete imported sound data sets
+15. **NC 70+ Warning** - Alerts when data exceeds NC rating scale
 
 ## Known Limitations
 1. Sones ↔ dBA conversions are approximate (frequency-dependent in reality)
 2. NC ↔ dBA uses typical +6 dB relationship (varies by spectrum)
-3. PDF parsing requires selectable text (image-based PDFs need OCR)
+3. ~~PDF parsing requires selectable text (image-based PDFs need OCR)~~ **FIXED**: AI vision now handles image-based documents
 4. Not deployed to production yet
 
 ## Files Created This Session
@@ -131,6 +158,8 @@ sound-agent/
 | Dec 12, 2025 | NC Curve Visualization | Chart showing user data vs NC curves |
 | Dec 12, 2025 | ASHRAE Integration | Compliance checker with room recommendations |
 | Dec 12, 2025 | Document Parsing | PDF/text upload with pattern extraction |
+| Jan 2, 2026 | AI Vision Extraction | Gemini 2.5 Flash for image/screenshot OCR with multi-row support |
+| Jan 2, 2026 | Split-Screen Layout | New page layout with left panel inputs, right panel results, CRUD for saved data, NC 70+ warning |
 
 ---
-*Last updated: December 12, 2025*
+*Last updated: January 2, 2026*

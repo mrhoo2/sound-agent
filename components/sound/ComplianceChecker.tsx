@@ -66,6 +66,9 @@ export function ComplianceChecker({ equipmentNC, onRoomTypeChange }: ComplianceC
     return selectedRoomId ? getRoomTypeById(selectedRoomId) : undefined;
   }, [selectedRoomId]);
   
+  // Check if NC exceeds scale (NC 70+)
+  const exceedsScale = equipmentNC !== undefined && equipmentNC > 70;
+  
   const compliance = useMemo(() => {
     if (equipmentNC === undefined || !selectedRoom) return undefined;
     return checkCompliance(equipmentNC, selectedRoom);

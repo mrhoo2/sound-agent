@@ -4,11 +4,12 @@
  * Document Uploader Component
  * Upload PDFs, images, or paste spec sheet text to extract sound data
  * Automatically uses AI vision when text extraction fails
+ * Supports multiple equipment rows (e.g., Supply, Return, Casing)
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, ClipboardPaste, X, Sparkles, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { ParseResult, ExtractedSoundData } from "@/lib/parsing";
@@ -27,6 +28,36 @@ const getApiKey = () => {
   return process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 };
 
+/**
+ * Get a display label for an extracted data row
+ */
+function getRowLabel(data: ExtractedSoundData, index: number): string {
+  if (data.equipment?.model) {
+    return data.equipment.model;
+  }
+  if (data.equipment?.type) {
+    return data.equipment.type;
+  }
+  if (data.equipment?.manufacturer) {
+    return data.equipment.manufacturer;
+  }
+  return `Row ${index + 1}`;
+}
+
+/**
+ * Get data type label
+ */
+function getDataTypeLabel(dataType?: "soundPower" | "soundPressure"): string {
+  switch (dataType) {
+    case "soundPower":
+      return "Sound Power (LW)";
+    case "soundPressure":
+      return "Sound Pressure (LP)";
+    default:
+      return "";
+  }
+}
+
 export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: DocumentUploaderProps) {
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
@@ -34,6 +65,8 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
   const [pasteText, setPasteText] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+  const [showRowSelector, setShowRowSelector] = useState(false);
   
   // Check if API key is configured
   useEffect(() => {
@@ -62,6 +95,15 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
       onOctaveBandsExtracted?.(bands);
     }
   }, [onDataExtracted, onOctaveBandsExtracted]);
+
+  // Handle row selection change
+  const handleRowSelect = useCallback((index: number) => {
+    setSelectedRowIndex(index);
+    setShowRowSelector(false);
+    if (parseResult && parseResult.data[index]) {
+      processExtractedData(parseResult.data[index]);
+    }
+  }, [parseResult, processExtractedData]);
   
   // Handle file drop with automatic AI fallback
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -71,6 +113,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     setUploadState("processing");
     setParseResult(null);
     setUsedAI(false);
+    setSelectedRowIndex(0);
     
     try {
       let result: ParseResult;
@@ -131,6 +174,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     setUploadState("processing");
     setParseResult(null);
     setUsedAI(false);
+    setSelectedRowIndex(0);
     
     const specSheetData = parseSpecSheetText(pasteText);
     
@@ -175,6 +219,8 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     setPasteText("");
     setShowPasteInput(false);
     setUsedAI(false);
+    setSelectedRowIndex(0);
+    setShowRowSelector(false);
   }, []);
   
   // Dropzone configuration - accept images if API key is configured
@@ -193,6 +239,10 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
     maxFiles: 1,
     disabled: uploadState === "processing",
   });
+
+  // Get currently selected data
+  const selectedData = parseResult?.data[selectedRowIndex];
+  const hasMultipleRows = (parseResult?.data.length ?? 0) > 1;
   
   return (
     <Card>
@@ -261,7 +311,7 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
               {uploadState === "processing" ? (
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 text-[#4A3AFF] animate-spin" />
-                  <p className="text-sm text-muted-foreground">Processing document...</p>
+                  <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
                 </div>
               ) : uploadState === "success" ? (
                 <div className="flex flex-col items-center gap-2">
@@ -360,12 +410,63 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
               </div>
             )}
             
+            {/* Multiple Row Selector */}
+            {parseResult.success && hasMultipleRows && (
+              <div className="relative">
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Found {parseResult.data.length} equipment configurations:
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowRowSelector(!showRowSelector)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-background border border-border rounded-lg text-sm hover:border-[#4A3AFF]/50 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">{getRowLabel(selectedData!, selectedRowIndex)}</span>
+                    {selectedData?.dataType && (
+                      <span className="text-xs text-muted-foreground">
+                        ({getDataTypeLabel(selectedData.dataType)})
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showRowSelector ? "rotate-180" : ""}`} />
+                </button>
+                
+                {showRowSelector && (
+                  <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg overflow-hidden">
+                    {parseResult.data.map((row, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleRowSelect(index)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-accent transition-colors ${
+                          index === selectedRowIndex ? "bg-[#4A3AFF]/10 text-[#4A3AFF]" : ""
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="font-medium">{getRowLabel(row, index)}</span>
+                          {row.dataType && (
+                            <span className="text-xs text-muted-foreground">
+                              ({getDataTypeLabel(row.dataType)})
+                            </span>
+                          )}
+                        </span>
+                        {index === selectedRowIndex && (
+                          <CheckCircle className="w-4 h-4 text-[#4A3AFF]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Extracted Data Summary */}
-            {parseResult.success && parseResult.data.length > 0 && (
+            {parseResult.success && selectedData && (
               <div className="p-3 bg-[#16DA7C]/10 border border-[#16DA7C]/30 rounded-lg">
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-[#16DA7C] mt-0.5 flex-shrink-0" />
-                  <div className="text-sm space-y-1">
+                  <div className="text-sm space-y-1 flex-1">
                     <p className="text-[#16DA7C] font-medium flex items-center gap-1">
                       Extracted Data
                       {usedAI && (
@@ -375,37 +476,42 @@ export function DocumentUploader({ onDataExtracted, onOctaveBandsExtracted }: Do
                         </span>
                       )}
                     </p>
-                    {parseResult.data[0].octaveBands && (
+                    {selectedData.octaveBands && (
                       <p className="text-foreground">
-                        ✓ Octave bands: {Object.values(parseResult.data[0].octaveBands).filter(v => v !== undefined).length} frequencies
+                        ✓ Octave bands: {Object.values(selectedData.octaveBands).filter(v => v !== undefined).length} frequencies
                       </p>
                     )}
-                    {parseResult.data[0].ncRating && (
+                    {selectedData.ncRating && (
                       <p className="text-foreground">
-                        ✓ NC Rating: NC-{parseResult.data[0].ncRating}
+                        ✓ NC Rating: NC-{selectedData.ncRating}
                       </p>
                     )}
-                    {parseResult.data[0].dba && (
+                    {selectedData.dba && (
                       <p className="text-foreground">
-                        ✓ Sound Level: {parseResult.data[0].dba} dBA
+                        ✓ Sound Level: {selectedData.dba} dBA
                       </p>
                     )}
-                    {parseResult.data[0].sones && (
+                    {selectedData.sones && (
                       <p className="text-foreground">
-                        ✓ Loudness: {parseResult.data[0].sones} sones
+                        ✓ Loudness: {selectedData.sones} sones
                       </p>
                     )}
-                    {parseResult.data[0].equipment && (
+                    {selectedData.equipment && (
                       <p className="text-foreground">
                         ✓ Equipment: {[
-                          parseResult.data[0].equipment.manufacturer,
-                          parseResult.data[0].equipment.model,
-                          parseResult.data[0].equipment.type,
+                          selectedData.equipment.manufacturer,
+                          selectedData.equipment.model,
+                          selectedData.equipment.type,
                         ].filter(Boolean).join(" ")}
                       </p>
                     )}
+                    {selectedData.dataType && (
+                      <p className="text-foreground">
+                        ✓ Data Type: {getDataTypeLabel(selectedData.dataType)}
+                      </p>
+                    )}
                     <p className="text-muted-foreground text-xs mt-2">
-                      Confidence: {parseResult.data[0].source.confidence}
+                      Confidence: {selectedData.source.confidence}
                     </p>
                   </div>
                 </div>

@@ -37,6 +37,9 @@ export interface ExtractedSoundData {
     type?: string;
   };
 
+  // Data type (Sound Power Level vs Sound Pressure Level)
+  dataType?: "soundPower" | "soundPressure";
+
   // Operating conditions
   conditions?: {
     fanSpeed?: string;
