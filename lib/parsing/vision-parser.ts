@@ -127,13 +127,34 @@ export async function extractSoundDataFromImage(
 
     // Parse the JSON response
     // Extract JSON from the response (it might have markdown code blocks)
-    let jsonStr = text;
+    let jsonStr = text.trim();
+    
+    // Try to extract JSON from markdown code blocks first
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       jsonStr = jsonMatch[1].trim();
     }
+    
+    // Also try to find JSON object if the response has extra text
+    if (!jsonStr.startsWith("{")) {
+      const jsonStart = jsonStr.indexOf("{");
+      const jsonEnd = jsonStr.lastIndexOf("}");
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonStr = jsonStr.substring(jsonStart, jsonEnd + 1);
+      }
+    }
+    
+    // Remove trailing commas before closing braces/brackets (common AI mistake)
+    jsonStr = jsonStr.replace(/,(\s*[\}\]])/g, "$1");
 
-    const parsed = JSON.parse(jsonStr);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (parseError) {
+      // Log the raw response for debugging
+      console.error("Failed to parse JSON response from Gemini:", jsonStr.substring(0, 500));
+      throw new Error(`Invalid JSON response from AI. The model may have returned malformed data.`);
+    }
 
     // Build ExtractedSoundData array from the response
     const extractedDataList: ExtractedSoundData[] = [];
