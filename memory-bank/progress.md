@@ -1,7 +1,7 @@
 # Progress: Sound Agent
 
 ## Current Status
-**Phase 4.5: Split-Screen Layout & NC 70+ Warning** - ✅ COMPLETE
+**Phase 5: Header Redesign & PDF Report** - ✅ COMPLETE
 
 ## Completed Phases
 
@@ -84,6 +84,16 @@
 | NC 70+ warning UI | ✅ Complete | Jan 2, 2026 |
 | Sound Power Level explanation | ✅ Complete | Jan 2, 2026 |
 
+### Phase 5: Header Redesign & PDF Report ✅
+| Milestone | Status | Date |
+|-----------|--------|------|
+| Header matches Takeoffs style | ✅ Complete | Jan 2, 2026 |
+| BuildVision logo from CDN | ✅ Complete | Jan 2, 2026 |
+| Generate Report button | ✅ Complete | Jan 2, 2026 |
+| PDF export with equipment data | ✅ Complete | Jan 2, 2026 |
+| Static SVG NC curve charts | ✅ Complete | Jan 2, 2026 |
+| NC 71 for exceeds scale compliance fail | ✅ Complete | Jan 2, 2026 |
+
 ## Upcoming Phases
 
 ### Phase 5: Deploy & Integrate
@@ -111,6 +121,8 @@
 13. **Split-Screen Layout** - Left panel inputs, right panel results/chart
 14. **CRUD for Saved Data** - Add, edit, delete imported sound data sets
 15. **NC 70+ Warning** - Alerts when data exceeds NC rating scale
+16. **Header Style** - Matches Takeoffs tool (BuildVision logo, title, action button)
+17. **Generate Report** - PDF export with static SVG NC curve charts for each equipment
 
 ## Known Limitations
 1. Sones ↔ dBA conversions are approximate (frequency-dependent in reality)
